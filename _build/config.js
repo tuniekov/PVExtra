@@ -3,7 +3,7 @@ export default {
     name_lower:"pvextra",
     version:"1.0.0", 
     release:"beta",
-    schema:true,
+    schema:false,
     assets:true,
     core:true,
     update:{
