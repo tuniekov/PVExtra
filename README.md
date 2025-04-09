@@ -16,13 +16,13 @@ site.loc заменить на домен своего сайта.
 4. После или во время создания компонента выполняем команду npm run build. Команда создаст транспортный пакет в site.loc\public\core\package и установит его.
 
 # Назначение файлов и папок
-Папки assets и core копируются в соответствующее папки сайта.
-В папке src исходный код Vue компонента.
-В папке _build настройки сборки компонента.
-В файле _build/config.js можно включить выключить файлы, папки и схему базы из сборки. И назначить MODX версию компонента.
-В файле _build\configs\gtsapipackages.js настройки таблиц для gtsAPI. По ним gtsAPI и PVTables формируют доступное API и таблицы, деревья, формы на фронте.
-В файле core\components\pvextra\model\schema\pvextra.mysql.schema.xml MODX схема базы данных.
-В файле core\components\pvextra\model\pvextra\pvextra.class.php класс MODX компонента. Триггеры и кастомные действия обращаются в него.
+1. Папки assets и core копируются в соответствующее папки сайта.
+2. В папке src исходный код Vue компонента.
+3. В папке _build настройки сборки компонента.
+4. В файле _build/config.js можно включить выключить файлы, папки и схему базы из сборки. И назначить MODX версию компонента.
+5. В файле _build\configs\gtsapipackages.js настройки таблиц для gtsAPI. По ним gtsAPI и PVTables формируют доступное API и таблицы, деревья, формы на фронте.
+6. В файле core\components\pvextra\model\schema\pvextra.mysql.schema.xml MODX схема базы данных.
+7. В файле core\components\pvextra\model\pvextra\pvextra.class.php класс MODX компонента. Триггеры и кастомные действия обращаются в него.
 
  
 
