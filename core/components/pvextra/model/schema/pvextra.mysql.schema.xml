@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model package="pvextra" baseClass="xPDOObject" platform="mysql" defaultEngine="InnoDB" phppvextra-package="pvextra"
+       version="1.1">
+    <object class="gsProductTree" table="gtsshop_products_tree" extends="xPDOSimpleObject">
+       <field key="parent_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true" default="0"/>
+       <field key="parents_ids" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+       <field key="title" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+       <field key="class" dbtype="varchar" precision="191" phptype="string" null="false" default=""/>
+       <field key="target_id" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true" default="0"/>
+       <field key="menuindex" dbtype="int" precision="10" attributes="unsigned" phptype="integer" null="true" default="0"/>
+
+       <index alias="parent_id" name="parent_id" primary="false" unique="false" type="BTREE">
+              <column key="parent_id" length="" collation="A" null="false"/>
+       </index>
+       <index alias="parents_ids" name="parents_ids" primary="false" unique="false" type="BTREE">
+              <column key="parents_ids" length="" collation="A" null="false"/>
+       </index>
+       <index alias="title" name="title" primary="false" unique="false" type="BTREE">
+              <column key="title" length="" collation="A" null="false"/>
+       </index>
+       <index alias="class" name="class" primary="false" unique="false" type="BTREE">
+              <column key="class" length="" collation="A" null="false"/>
+       </index>
+       <index alias="target_id" name="target_id" primary="false" unique="false" type="BTREE">
+              <column key="target_id" length="" collation="A" null="false"/>
+       </index>
+    </object>
+</model>
