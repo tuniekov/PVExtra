@@ -12,7 +12,7 @@
 VITE_APP_PROTOCOL=http
 VITE_APP_HOST=site.loc
 site.loc заменить на домен своего сайта.
-3. Выполняем команду npm run get_token. Вводим логин и пароль админа сайта. Токен сохраняется в файле site.loc\public\Extras\.env
+3. Выполняем команду npm run get_token. Вводим логин и пароль админа сайта. Токен сохраняется в файле site.loc\public\Extras\\.env
 4. После или во время создания компонента выполняем команду npm run build. Команда создаст транспортный пакет в site.loc\public\core\package и установит его.
 
 # Назначение файлов и папок
