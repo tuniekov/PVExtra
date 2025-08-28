@@ -30,7 +30,7 @@ if(config.schema){
 
 for(let k in snippets){
     try{
-        const file = await fs.readFile('./_build/snippets/' + snippets[k].file)
+        const file = await fs.readFile('../core/components/'+config.name_lower+'/elements/snippets/' + snippets[k].file)
         form.append(snippets[k].file, file, snippets[k].file)
     }catch(e){
         console.log('Ошибка файла', snippets[k].file, e)

@@ -62,7 +62,8 @@ export default defineConfig(async ({mode})=>{
         },
         resolve: {
             alias: {
-                'pvtables/dist/pvtables':'pvtables/src/index'
+                'pvtables/dist/pvtables':'pvtables/src/index',
+                'vue': 'vue/dist/vue.esm-bundler.js'
             }
         }
     }
