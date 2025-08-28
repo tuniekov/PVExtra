@@ -3,6 +3,7 @@ console.log('upload config on site!');
 import fs from 'fs/promises';
 import axios from 'axios';
 import config from "./config.js";
+import chunks from "./configs/chunks.js";
 import snippets from "./configs/snippets.js";
 import settings from "./configs/settings.js";
 import gtsapirules from "./configs/gtsapirules.js"
@@ -28,15 +29,16 @@ if(config.schema){
     }
 }
 
-for(let k in snippets){
-    try{
-        const file = await fs.readFile('../core/components/'+config.name_lower+'/elements/snippets/' + snippets[k].file)
-        form.append(snippets[k].file, file, snippets[k].file)
-    }catch(e){
-        console.log('Ошибка файла', snippets[k].file, e)
-    }
-}
+// for(let k in snippets){
+//     try{
+//         const file = await fs.readFile('../core/components/'+config.name_lower+'/elements/snippets/' + snippets[k].file)
+//         form.append(snippets[k].file, file, snippets[k].file)
+//     }catch(e){
+//         console.log('Ошибка файла', snippets[k].file, e)
+//     }
+// }
 form.append('snippets', JSON.stringify(snippets))
+form.append('chunks', JSON.stringify(chunks))
 form.append('settings', JSON.stringify(settings))
 form.append('gtsapirules', JSON.stringify(gtsapirules))
 form.append('gtsapipackages', JSON.stringify(gtsapipackages, null, 2))
