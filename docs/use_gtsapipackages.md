@@ -49,7 +49,7 @@ export default {
 
 1. **type: 1** - Обычные таблицы PVTables
 2. **type: 2** - JSON таблицы
-3. **type: 3** - Деревья UniTree
+3. **type: 3** - Деревья UniTree и меню PVMenu
 
 ## Конфигурация properties
 
@@ -1108,8 +1108,164 @@ export default {
 ### Для группированных данных
 Если вам нужны таблицы с группировкой данных (GROUP BY), обратитесь к файлу `docs/use_group_gtsapipackages.md` для получения подробной информации о параметре `data_fields`.
 
-### Для деревьев UniTree
+### Для деревьев UniTree и меню PVMenu
 При использовании `type: 3` доступны дополнительные настройки для работы с иерархическими структурами.
+
+#### Компонент PVMenu
+
+**PVMenu** - это компонент для отображения горизонтального меню сайта на основе данных из API. Компонент использует Menubar из PrimeVue для отображения иерархической структуры меню с поддержкой URL навигации.
+
+**Требования для использования PVMenu:**
+- `type: 3` - обязательно для работы с деревьями
+- `properties.makeUrl: 1` - обязательно для генерации URL в поле `node.data.url`
+
+**Пример конфигурации для меню:**
+```javascript
+export default {
+    mypackage: {
+        name: 'mypackage',
+        gtsAPITables: {
+            site_menu: {
+                table: 'site_menu',
+                version: 1,
+                type: 3, // Обязательно для UniTree/PVMenu
+                authenticated: false, // Меню может быть публичным
+                active: true,
+                properties: {
+                    makeUrl: 1, // Обязательно для генерации URL
+                    autocomplete: {
+                        tpl: '{$title}',
+                        where: {
+                            "title:LIKE": "%query%",
+                            "active": 1
+                        },
+                        limit: 0
+                    },
+                    fields: {
+                        "id": {
+                            "type": "view"
+                        },
+                        "title": {
+                            "label": "Заголовок",
+                            "type": "text"
+                        },
+                        "url": {
+                            "label": "URL",
+                            "type": "text"
+                        },
+                        "parent_id": {
+                            "label": "Родитель",
+                            "type": "autocomplete",
+                            "table": "site_menu"
+                        },
+                        "menuindex": {
+                            "label": "Порядок",
+                            "type": "number"
+                        },
+                        "active": {
+                            "label": "Активен",
+                            "type": "boolean"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Использование компонента PVMenu:**
+```vue
+<template>
+    <div class="menu-container">
+        <PVMenu 
+            table="site_menu" 
+            @menu-click="handleMenuClick"
+        />
+    </div>
+</template>
+
+<script setup>
+import { PVMenu } from 'pvtables'
+
+const handleMenuClick = (event) => {
+    console.log('Клик по меню:', event.node, event.url)
+}
+</script>
+```
+
+**Основные возможности PVMenu:**
+- Загрузка данных меню через API (тот же что и для UniTree)
+- Отображение горизонтального иерархического меню с помощью Menubar
+- Поддержка SVG иконок из gtsAPIUniTreeClass
+- Навигация по URL (node.data.url) - внутренние и внешние ссылки
+- Автоматическая фильтрация неактивных элементов (active !== 0)
+- События клика по элементам меню
+- Индикатор загрузки
+
+**Структура данных узла меню:**
+```javascript
+{
+    data: {
+        id: 1,
+        title: "Главная",
+        url: "/",
+        parent_id: 0,
+        menuindex: 1,
+        active: 1,
+        class: "menu_item" // для иконок
+    },
+    children: [
+        // дочерние элементы
+    ]
+}
+```
+
+**Поддержка иконок:**
+Если в ответе API присутствует `gtsAPIUniTreeClass` с SVG иконками, они автоматически отображаются в меню:
+
+```javascript
+// В ответе API
+gtsAPIUniTreeClass: {
+    "menu_item": {
+        "svg": "<svg>...</svg>"
+    },
+    "menu_category": {
+        "svg": "<svg>...</svg>"
+    }
+}
+```
+
+**Обработка URL:**
+- **Внутренние ссылки** (начинающиеся не с http): `window.location.href = url`
+- **Внешние ссылки** (http/https): `window.open(url, '_blank')`
+
+**События:**
+- `@menu-click` - клик по элементу меню, передает объект с `node` и `url`
+
+**Методы компонента:**
+- `refresh()` - обновить данные меню
+
+**Стилизация:**
+Компонент использует стандартные классы PrimeVue Menubar и может быть стилизован через CSS:
+
+```css
+.pv-menu {
+    width: 100%;
+}
+
+.menu-icon svg {
+    width: 16px;
+    height: 16px;
+}
+```
+
+**Отличия от UniTree:**
+- Упрощенный интерфейс без поиска, drag&drop, действий
+- Фокус на навигации через URL
+- Автоматическая фильтрация неактивных элементов
+- Использование Menubar вместо sl-vue-tree-next
+- Горизонтальное отображение для меню сайта
 
 ## Ограничения имен полей
 
