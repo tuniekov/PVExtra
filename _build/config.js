@@ -1,6 +1,6 @@
 export default {
-    name:"gtsShopSiteTemplate",
-    name_lower:"gtsshopsitetemplate",
+    name:"PVExtra",
+    name_lower:"pvextra",
     version:"1.0.0", 
     release:"beta",
     schema:false,
