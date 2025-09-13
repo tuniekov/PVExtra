@@ -1,6 +1,6 @@
 export default {
-    name:"PVExtra",
-    name_lower:"pvextra",
+    name:"gtsShopSiteTemplate",
+    name_lower:"gtsshopsitetemplate",
     version:"1.0.0", 
     release:"beta",
     schema:false,
@@ -9,6 +9,7 @@ export default {
     update:{
         snippets: true,
         chunks: true,
+        templates: true,
         settings: true,
         gtsapirules: true,
         gtsapipackages: true,
