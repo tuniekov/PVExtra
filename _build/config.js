@@ -8,6 +8,7 @@ export default {
     core:true,
     update:{
         snippets: true,
+        chunks: true,
         settings: true,
         gtsapirules: true,
         gtsapipackages: true,
