@@ -11,6 +11,7 @@ import gtsapirules from "./configs/gtsapirules.js"
 import gtsapipackages from "./configs/gtsapipackages.js"
 import data from "./configs/data.js";
 import resources from "./configs/resources.js";
+import resource_groups from "./configs/resource_groups.js";
 import FormData from 'form-data';
 import { loadEnv} from 'vite'
 
@@ -46,6 +47,7 @@ form.append('gtsapirules', JSON.stringify(gtsapirules))
 form.append('gtsapipackages', JSON.stringify(gtsapipackages, null, 2))
 form.append('data', JSON.stringify(data, null, 2))
 form.append('resources', JSON.stringify(resources, null, 2))
+form.append('resource_groups', JSON.stringify(resource_groups, null, 2))
 
 const fileExists = async path => !!(await fs.stat(path).catch(e => false));
 if(config.core){
