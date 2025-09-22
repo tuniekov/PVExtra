@@ -10,7 +10,7 @@ export default {
     //             type: 3,
     //             authenticated:false,
     //             groups:'',
-    //             permitions:'',
+    //             permissions:'',
     //             active:true,
     //             gtsAPIUniTreeClass:{
     //                 gsCategory: {
@@ -121,7 +121,7 @@ export default {
     //             type: 3,
     //             authenticated:false,
     //             groups:'',
-    //             permitions:'',
+    //             permissions:'',
     //             active:true,
     //             gtsAPIUniTreeClass:{
     //                 gsCategory: {
@@ -250,7 +250,7 @@ export default {
     //             type: 1,
     //             authenticated:true,
     //             groups:'',
-    //             permitions:'',
+    //             permissions:'',
     //             active:true,
     //             properties: {
     //                 actions:{
@@ -272,7 +272,7 @@ export default {
     //             type: 1,
     //             authenticated:true,
     //             groups:'',
-    //             permitions:'',
+    //             permissions:'',
     //             active:true,
     //             properties: {
     //                 autocomplete:{
@@ -290,7 +290,7 @@ export default {
     //             version:2,
     //             authenticated:true,
     //             groups:'',
-    //             permitions:'',
+    //             permissions:'',
     //             active:true,
     //             properties: {
     //                 actions:{
