@@ -71,6 +71,7 @@ public function modifyTableRule($params) {
 - `$params['object_new']` (array) - новые данные объекта (по ссылке)
 - `$params['object']` (object) - объект MODX (по ссылке)
 - `$params['trigger']` (string) - тип триггера ('gtsapifunc')
+- `$params['internal_action']` (string) - внутреннее действие, вызвавшее метод (например, 'create' или 'update' для метода 'read')
 
 **Возвращает:** `['success' => 1, 'data' => []]` или `['success' => 0, 'message' => 'ошибка']`
 
@@ -193,6 +194,7 @@ try {
 - `object_old` - старые данные
 - `object_new` - новые данные
 - `object` - объект MODX
+- `internal_action` - внутреннее действие, вызвавшее метод
 
 **Использование в плагине:**
 ```php
@@ -313,6 +315,32 @@ private function prepareRowData($row) {
 }
 ```
 
+### Пример 5: Использование internal_action для различения контекста вызова
+
+```php
+public function handleReadWithContext($params) {
+    if ($params['type'] === 'before' && $params['method'] === 'read') {
+        $internal_action = $params['internal_action'];
+        
+        // Различная логика в зависимости от контекста вызова
+        if ($internal_action === 'create') {
+            // Логика для read, вызванного после создания записи
+            // Например, можно добавить дополнительные поля для отображения
+            $this->modx->log(1, 'Read вызван после создания записи');
+        } elseif ($internal_action === 'update') {
+            // Логика для read, вызванного после обновления записи
+            // Например, можно обновить кэш или пересчитать связанные данные
+            $this->modx->log(1, 'Read вызван после обновления записи');
+        } else {
+            // Обычный read (прямой вызов)
+            $this->modx->log(1, 'Прямой вызов read');
+        }
+    }
+    
+    return $this->success();
+}
+```
+
 ## Особенности триггера на операцию read
 
 Триггер на операцию `read` имеет особенности в обработке данных:
@@ -376,6 +404,38 @@ return $this->success('', ['out' => $modifiedOut]);
 ```
 
 Где `$modifiedOut` - модифицированная структура данных результата.
+
+### Параметр internal_action в read триггере
+
+Параметр `internal_action` позволяет определить контекст вызова метода `read`:
+
+- **Пустая строка** - прямой вызов read (обычная загрузка данных)
+- **'create'** - read вызван после создания записи (для получения свежих данных созданной записи)
+- **'update'** - read вызван после обновления записи (для получения обновленных данных)
+
+Это позволяет применять разную логику обработки в зависимости от контекста:
+
+```php
+public function handleReadOperation($params) {
+    if ($params['type'] === 'after' && $params['method'] === 'read') {
+        $internal_action = $params['internal_action'];
+        $out = $params['object_old'];
+        
+        // Применяем разную логику в зависимости от контекста
+        if ($internal_action === 'create' || $internal_action === 'update') {
+            // Для операций создания/обновления добавляем дополнительные данные
+            $out['notification'] = [
+                'type' => 'success',
+                'message' => 'Запись успешно ' . ($internal_action === 'create' ? 'создана' : 'обновлена')
+            ];
+        }
+        
+        return $this->success('', ['out' => $out]);
+    }
+    
+    return $this->success();
+}
+```
 
 ## Рекомендации по использованию
 
