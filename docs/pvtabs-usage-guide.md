@@ -245,6 +245,92 @@ const tabs = ref({
 
 **Важно:** Компонент должен быть глобально зарегистрирован или импортирован.
 
+#### Обязательные пропсы для пользовательского компонента
+
+При использовании типа `component`, PVTabs автоматически передает следующие пропсы в ваш компонент:
+
+- **parent_row** (Object) - данные родительской строки
+- **parent-id** (Number | String) - ID текущей записи (значение из `current_id`)
+- **filters** (Object) - фильтры для данной вкладки (из `filters[tab.key]`)
+
+**Пример определения пропсов в пользовательском компоненте:**
+
+```vue
+<script setup>
+const props = defineProps({
+  parent_row: {
+    type: Object,
+    required: true,
+    default: () => ({})
+  },
+  parentId: {
+    type: [Number, String],
+    required: true,
+    default: 0
+  },
+  filters: {
+    type: Object,
+    required: false,
+    default: () => ({})
+  }
+})
+
+// Использование пропсов
+console.log('Родительская строка:', props.parent_row)
+console.log('ID родителя:', props.parentId)
+console.log('Фильтры:', props.filters)
+</script>
+```
+
+**Полный пример пользовательского компонента:**
+
+```vue
+<template>
+  <div class="custom-component">
+    <h3>Пользовательский компонент</h3>
+    <p>ID родителя: {{ parentId }}</p>
+    <p>Данные родителя: {{ parent_row }}</p>
+    <div v-if="filters">
+      <h4>Активные фильтры:</h4>
+      <pre>{{ filters }}</pre>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  parent_row: {
+    type: Object,
+    required: true,
+    default: () => ({})
+  },
+  parentId: {
+    type: [Number, String],
+    required: true,
+    default: 0
+  },
+  filters: {
+    type: Object,
+    required: false,
+    default: () => ({})
+  }
+})
+
+// Вычисляемые свойства на основе пропсов
+const hasFilters = computed(() => {
+  return Object.keys(props.filters).length > 0
+})
+</script>
+
+<style scoped>
+.custom-component {
+  padding: 1rem;
+}
+</style>
+```
+
 ### 8. Множественные таблицы (tables)
 
 Вкладка с несколькими таблицами.
