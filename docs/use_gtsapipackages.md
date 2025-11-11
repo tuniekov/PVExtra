@@ -48,8 +48,350 @@ export default {
 ## Типы таблиц
 
 1. **type: 1** - Обычные таблицы PVTables
-2. **type: 2** - JSON таблицы
+2. **type: 2** - JSON таблицы (работа с JSON полями в базе данных)
 3. **type: 3** - Деревья UniTree и меню PVMenu
+
+## JSON таблицы (type: 2)
+
+**JSON таблицы** позволяют работать с данными, хранящимися в JSON полях базы данных. Это полезно когда:
+- Данные имеют динамическую структуру
+- Нужно хранить вложенные массивы объектов
+- Требуется гибкость в изменении структуры данных без миграций БД
+- Данные логически связаны с основной записью
+
+### Основная конфигурация JSON таблицы
+
+```javascript
+nfReiki: {
+    table: 'nfReiki',
+    class: 'nfFlanecData',           // Класс MODX объекта
+    autocomplete_field: '',
+    version: 1,
+    type: 2,                         // Обязательно для JSON таблиц
+    authenticated: true,
+    groups: 'Administrator',
+    permissions: '',
+    active: true,
+    properties: {
+        hide_id: 1,                  // Скрыть поле ID
+        actions: {
+            read: {},                // Доступные действия
+        },
+        json_path: {                 // Конфигурация пути к JSON данным
+            where: {
+                naryad_id: 'naryad_id'  // Условия для поиска записи
+            },
+            field: 'json_data',      // Поле с JSON данными
+            key: 'reiki.{shina}'     // Путь внутри JSON с динамическими значениями
+        },
+        fields: {
+            // Поля таблицы
+        }
+    }
+}
+```
+
+### Параметр json_path
+
+Параметр `json_path` определяет как система находит и работает с JSON данными:
+
+**Обязательные параметры:**
+- `where` - условия для поиска записи в базе данных
+- `field` - название поля в таблице, содержащего JSON данные
+- `key` - путь к данным внутри JSON (опционально)
+
+#### where - Условия поиска записи
+
+Определяет по каким полям искать запись в базе данных. Значения берутся из фильтров таблицы:
+
+```javascript
+json_path: {
+    where: {
+        naryad_id: 'naryad_id'  // Поле БД: имя фильтра
+    }
+}
+```
+
+**Как это работает:**
+1. Пользователь выбирает значение в фильтре `naryad_id`
+2. Система ищет запись где `naryad_id = значение_из_фильтра`
+3. Из найденной записи берется поле с JSON данными
+
+**Множественные условия:**
+```javascript
+json_path: {
+    where: {
+        naryad_id: 'naryad_id',
+        smena_id: 'smena_id'
+    }
+}
+```
+
+#### field - Поле с JSON данными
+
+Название поля в таблице базы данных, которое содержит JSON:
+
+```javascript
+json_path: {
+    field: 'json_data'  // Поле типа TEXT/JSON в БД
+}
+```
+
+**Структура данных в БД:**
+```sql
+CREATE TABLE nfFlanecData (
+    id INT PRIMARY KEY,
+    naryad_id INT,
+    json_data TEXT  -- Это поле содержит JSON
+);
+```
+
+#### key - Путь внутри JSON
+
+**Новая возможность (v2024.1):** Поддержка динамических значений в пути через плейсхолдеры `{field_name}`.
+
+Определяет путь к нужным данным внутри JSON структуры:
+
+```javascript
+json_path: {
+    key: 'reiki.{shina}'  // Путь с динамическим значением
+}
+```
+
+**Статический путь:**
+```javascript
+// JSON в БД:
+{
+    "reiki": {
+        "shina1": [
+            {"id": 1, "length": 100, "count": 5},
+            {"id": 2, "length": 150, "count": 3}
+        ]
+    }
+}
+
+// Конфигурация:
+json_path: {
+    key: 'reiki.shina1'  // Фиксированный путь
+}
+```
+
+**Динамический путь с плейсхолдерами:**
+```javascript
+// JSON в БД:
+{
+    "reiki": {
+        "shina1": [
+            {"id": 1, "length": 100, "count": 5}
+        ],
+        "shina2": [
+            {"id": 1, "length": 200, "count": 8}
+        ],
+        "shina3": [
+            {"id": 1, "length": 150, "count": 6}
+        ]
+    }
+}
+
+// Конфигурация:
+json_path: {
+    key: 'reiki.{shina}'  // {shina} заменяется на значение из фильтра
+}
+
+// Если пользователь выбрал в фильтре shina = "shina2",
+// система получит данные из reiki.shina2
+```
+
+**Множественные плейсхолдеры:**
+```javascript
+json_path: {
+    key: 'data.{category}.items.{type}'
+}
+
+// При category="electronics" и type="phones"
+// Путь станет: data.electronics.items.phones
+```
+
+**Вложенность:**
+Поддерживается до 4 уровней вложенности:
+```javascript
+// Уровень 1
+key: 'items'
+
+// Уровень 2
+key: 'data.items'
+
+// Уровень 3
+key: 'data.category.items'
+
+// Уровень 4
+key: 'data.category.subcategory.items'
+```
+
+### Полный пример конфигурации
+
+```javascript
+export default {
+    mypackage: {
+        name: 'mypackage',
+        gtsAPITables: {
+            nfReiki: {
+                table: 'nfReiki',
+                class: 'nfFlanecData',
+                autocomplete_field: '',
+                version: 1,
+                type: 2,
+                authenticated: true,
+                groups: 'Administrator',
+                permissions: '',
+                active: true,
+                properties: {
+                    hide_id: 1,
+                    actions: {
+                        read: {},
+                        create: { groups: 'Administrator' },
+                        update: { groups: 'Administrator' },
+                        delete: { groups: 'Administrator' }
+                    },
+                    json_path: {
+                        where: {
+                            naryad_id: 'naryad_id'
+                        },
+                        field: 'json_data',
+                        key: 'reiki.{shina}'
+                    },
+                    fields: {
+                        "id": {
+                            "type": "view"
+                        },
+                        "shina": {
+                            "label": "Шина",
+                            "type": "text",
+                            "readonly": true
+                        },
+                        "length": {
+                            "label": "Длина",
+                            "type": "number"
+                        },
+                        "count": {
+                            "label": "Кол-во",
+                            "type": "number"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### Структура JSON данных
+
+**Пример данных в поле json_data:**
+```json
+{
+    "reiki": {
+        "shina1": [
+            {
+                "id": 1,
+                "shina": "shina1",
+                "length": 100,
+                "count": 5
+            },
+            {
+                "id": 2,
+                "shina": "shina1",
+                "length": 150,
+                "count": 3
+            }
+        ],
+        "shina2": [
+            {
+                "id": 1,
+                "shina": "shina2",
+                "length": 200,
+                "count": 8
+            }
+        ]
+    }
+}
+```
+
+### Работа с JSON таблицами
+
+**Чтение данных:**
+1. Пользователь выбирает фильтры (например, `naryad_id=123`, `shina=shina1`)
+2. Система находит запись в БД по условиям `where`
+3. Извлекает JSON из поля `field`
+4. Переходит по пути `key` с подстановкой значений из фильтров
+5. Отображает массив объектов как строки таблицы
+
+**Создание записи:**
+1. Пользователь создает новую запись
+2. Система генерирует новый ID (максимальный + 1)
+3. Добавляет объект в массив по указанному пути
+4. Сохраняет обновленный JSON в БД
+
+**Обновление записи:**
+1. Пользователь редактирует запись
+2. Система находит объект по ID в массиве
+3. Обновляет значения полей
+4. Сохраняет обновленный JSON в БД
+
+**Удаление записи:**
+1. Пользователь удаляет запись
+2. Система находит объект по ID в массиве
+3. Удаляет объект из массива
+4. Сохраняет обновленный JSON в БД
+
+### Особенности JSON таблиц
+
+**Преимущества:**
+- Гибкая структура данных без миграций БД
+- Хранение связанных данных в одной записи
+- Динамическая вложенность
+- Быстрое прототипирование
+
+**Ограничения:**
+- Максимум 4 уровня вложенности в `key`
+- ID генерируются автоматически (максимальный + 1)
+- Нет прямых SQL запросов к данным внутри JSON
+- Требуется наличие фильтров для определения записи
+
+**Рекомендации:**
+- Используйте `hide_id: 1` если ID не имеет смысла для пользователя
+- Добавляйте `readonly: true` для полей, определяющих путь (например, `shina`)
+- Всегда указывайте необходимые фильтры в интерфейсе
+- Документируйте структуру JSON для разработчиков
+
+### Примеры использования
+
+**Хранение настроек по категориям:**
+```javascript
+json_path: {
+    where: { user_id: 'user_id' },
+    field: 'settings',
+    key: 'categories.{category_id}.options'
+}
+```
+
+**Данные по периодам:**
+```javascript
+json_path: {
+    where: { report_id: 'report_id' },
+    field: 'data',
+    key: 'periods.{year}.{month}'
+}
+```
+
+**Вложенные справочники:**
+```javascript
+json_path: {
+    where: { document_id: 'document_id' },
+    field: 'content',
+    key: 'sections.{section}.items'
+}
+```
 
 ## Конфигурация properties
 
