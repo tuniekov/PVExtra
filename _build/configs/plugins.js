@@ -3,7 +3,7 @@ export default {
     //     file: 'pvextra',
     //     description: '',
     //     events: {
-    //         'getTablesLoadGTSConfig': [],
+    //         'gtsAPIRunTriggers': [],
     //     },
     // },
 }
