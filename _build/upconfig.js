@@ -5,6 +5,7 @@ import axios from 'axios';
 import config from "./config.js";
 import chunks from "./configs/chunks.js";
 import snippets from "./configs/snippets.js";
+import plugins from "./configs/plugins.js";
 import templates from "./configs/templates.js";
 import settings from "./configs/settings.js";
 import gtsapirules from "./configs/gtsapirules.js"
@@ -40,6 +41,7 @@ if(config.schema){
 //     }
 // }
 form.append('snippets', JSON.stringify(snippets))
+form.append('plugins', JSON.stringify(plugins))
 form.append('chunks', JSON.stringify(chunks))
 form.append('templates', JSON.stringify(templates))
 form.append('settings', JSON.stringify(settings))

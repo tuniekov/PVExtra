@@ -8,6 +8,7 @@ export default {
     core:true,
     update:{
         snippets: true,
+        plugins: true,
         chunks: true,
         templates: true,
         settings: true,
