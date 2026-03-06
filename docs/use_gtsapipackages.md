@@ -393,6 +393,102 @@ json_path: {
 }
 ```
 
+### select_from_json — Select-опции из соседнего JSON-ключа
+
+В JSON таблицах (type: 2) часто бывает ситуация, когда данные для выпадающего списка находятся в соседнем ключе того же JSON объекта. Например, JSON содержит массив `dop_mats` (доп. материалы) и массив `naryads` (наряды), и при редактировании материала нужно выбрать наряд только из тех, что есть в этом JSON.
+
+Параметр `select_from_json` в определении поля позволяет автоматически формировать опции select из соседнего ключа JSON.
+
+#### Параметры поля
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `select_from_json` | string | Имя соседнего ключа в JSON, из которого брать опции |
+| `select_value_field` | string | Поле в элементах соседнего массива, содержащее значение (по умолчанию `id`) |
+| `select_label_field` | string | Поле для отображаемого текста (по умолчанию `name`) |
+| `select_label_class` | string | xPDO класс для получения label из БД вместо JSON (опционально) |
+
+#### Принцип работы
+
+1. При `read()` JSON таблицы бэкенд находит поля с `select_from_json`
+2. Из соседнего ключа JSON извлекаются уникальные значения по `select_value_field`
+3. Формируются опции `[{id, content}, ...]`:
+   - Если указан `select_label_class` — label берётся из БД (по `select_label_field`)
+   - Иначе — label берётся из JSON (по `select_label_field`)
+4. Опции передаются фронтенду в `response.data.selects`
+5. PVTables автоматически применяет их к соответствующему select-полю
+
+#### Пример: доп. материалы с нарядами
+
+**Структура JSON в БД:**
+```json
+{
+    "naryads": [
+        {"naryad_id": 5, "fullname": "Деталь 1"},
+        {"naryad_id": 8, "fullname": "Деталь 2"}
+    ],
+    "dop_mats": [
+        {"id": 1, "naryad_id": 5, "material_id": 100, "cnt": 2},
+        {"id": 2, "naryad_id": 8, "material_id": 101, "cnt": 1}
+    ]
+}
+```
+
+**Конфигурация таблицы:**
+```javascript
+dopProductMaterial: {
+    table: 'dopProductMaterial',
+    class: 'gsRaschetProductDop',
+    type: 2,
+    properties: {
+        json_path: {
+            where: { raschet_product_id: 'raschet_product_id' },
+            field: 'json',
+            key: 'dop_mats'
+        },
+        fields: {
+            naryad_id: {
+                label: 'Наряд списания',
+                type: 'select',
+                select_from_json: 'naryads',       // Брать опции из ключа "naryads"
+                select_value_field: 'naryad_id',    // Значение — поле naryad_id
+                select_label_class: 'gsNaryad',     // Label из таблицы gsNaryad
+                select_label_field: 'name'          // Поле name в gsNaryad
+            },
+            material_id: {
+                label: 'Материал',
+                type: 'autocomplete',
+                table: 'gsMaterial'
+            },
+            cnt: {
+                label: 'Количество',
+                type: 'decimal'
+            }
+        }
+    }
+}
+```
+
+**Результат:** при открытии таблицы `dopProductMaterial` поле `naryad_id` отобразит выпадающий список с двумя нарядами (id 5 и 8), а их названия будут взяты из таблицы `gsNaryad`.
+
+#### Пример: label из JSON (без обращения к БД)
+
+Если `select_label_class` не указан, label берётся прямо из элементов JSON:
+
+```javascript
+fields: {
+    category_id: {
+        label: 'Категория',
+        type: 'select',
+        select_from_json: 'categories',    // Соседний ключ
+        select_value_field: 'id',          // По умолчанию 'id'
+        select_label_field: 'title'        // Поле для отображения
+    }
+}
+```
+
+При JSON `{"categories": [{"id": 1, "title": "Основные"}, {"id": 2, "title": "Доп."}]}` — select покажет «Основные» и «Доп.».
+
 ## Конфигурация properties
 
 ### Form (Конфигурация формы)
