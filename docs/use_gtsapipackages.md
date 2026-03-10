@@ -393,6 +393,102 @@ json_path: {
 }
 ```
 
+### select_from_json — Select-опции из соседнего JSON-ключа
+
+В JSON таблицах (type: 2) часто бывает ситуация, когда данные для выпадающего списка находятся в соседнем ключе того же JSON объекта. Например, JSON содержит массив `dop_mats` (доп. материалы) и массив `naryads` (наряды), и при редактировании материала нужно выбрать наряд только из тех, что есть в этом JSON.
+
+Параметр `select_from_json` в определении поля позволяет автоматически формировать опции select из соседнего ключа JSON.
+
+#### Параметры поля
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `select_from_json` | string | Имя соседнего ключа в JSON, из которого брать опции |
+| `select_value_field` | string | Поле в элементах соседнего массива, содержащее значение (по умолчанию `id`) |
+| `select_label_field` | string | Поле для отображаемого текста (по умолчанию `name`) |
+| `select_label_class` | string | xPDO класс для получения label из БД вместо JSON (опционально) |
+
+#### Принцип работы
+
+1. При `read()` JSON таблицы бэкенд находит поля с `select_from_json`
+2. Из соседнего ключа JSON извлекаются уникальные значения по `select_value_field`
+3. Формируются опции `[{id, content}, ...]`:
+   - Если указан `select_label_class` — label берётся из БД (по `select_label_field`)
+   - Иначе — label берётся из JSON (по `select_label_field`)
+4. Опции передаются фронтенду в `response.data.selects`
+5. PVTables автоматически применяет их к соответствующему select-полю
+
+#### Пример: доп. материалы с нарядами
+
+**Структура JSON в БД:**
+```json
+{
+    "naryads": [
+        {"naryad_id": 5, "fullname": "Деталь 1"},
+        {"naryad_id": 8, "fullname": "Деталь 2"}
+    ],
+    "dop_mats": [
+        {"id": 1, "naryad_id": 5, "material_id": 100, "cnt": 2},
+        {"id": 2, "naryad_id": 8, "material_id": 101, "cnt": 1}
+    ]
+}
+```
+
+**Конфигурация таблицы:**
+```javascript
+dopProductMaterial: {
+    table: 'dopProductMaterial',
+    class: 'gsRaschetProductDop',
+    type: 2,
+    properties: {
+        json_path: {
+            where: { raschet_product_id: 'raschet_product_id' },
+            field: 'json',
+            key: 'dop_mats'
+        },
+        fields: {
+            naryad_id: {
+                label: 'Наряд списания',
+                type: 'select',
+                select_from_json: 'naryads',       // Брать опции из ключа "naryads"
+                select_value_field: 'naryad_id',    // Значение — поле naryad_id
+                select_label_class: 'gsNaryad',     // Label из таблицы gsNaryad
+                select_label_field: 'name'          // Поле name в gsNaryad
+            },
+            material_id: {
+                label: 'Материал',
+                type: 'autocomplete',
+                table: 'gsMaterial'
+            },
+            cnt: {
+                label: 'Количество',
+                type: 'decimal'
+            }
+        }
+    }
+}
+```
+
+**Результат:** при открытии таблицы `dopProductMaterial` поле `naryad_id` отобразит выпадающий список с двумя нарядами (id 5 и 8), а их названия будут взяты из таблицы `gsNaryad`.
+
+#### Пример: label из JSON (без обращения к БД)
+
+Если `select_label_class` не указан, label берётся прямо из элементов JSON:
+
+```javascript
+fields: {
+    category_id: {
+        label: 'Категория',
+        type: 'select',
+        select_from_json: 'categories',    // Соседний ключ
+        select_value_field: 'id',          // По умолчанию 'id'
+        select_label_field: 'title'        // Поле для отображения
+    }
+}
+```
+
+При JSON `{"categories": [{"id": 1, "title": "Основные"}, {"id": 2, "title": "Доп."}]}` — select покажет «Основные» и «Доп.».
+
 ## Конфигурация properties
 
 ### Form (Конфигурация формы)
@@ -791,6 +887,255 @@ actions: {
 - Применяются все настройки доступа из конфигурации таблицы
 - Экспортируются только те данные, которые пользователь может видеть
 - Соблюдаются все фильтры и ограничения доступа
+
+#### Copy (Копирование записей)
+
+**Новая возможность (v2024.1):** Действие `copy` позволяет копировать записи таблицы вместе со связанными данными из других таблиц.
+
+**Автоматическое включение:**
+Действие `copy` может быть добавлено в конфигурацию таблицы для копирования записей с их связями.
+
+**Базовая конфигурация:**
+```javascript
+actions: {
+    copy: {
+        label: 'Копировать',
+        parent_class: 'gsProduct',
+        default_template: 'ProductTemplate'
+    }
+}
+```
+
+**Расширенная конфигурация с формой и связями (для PVTables):**
+**Проверить потом не знаю как работает в pvtables form. Скорее не работает.**
+```javascript
+actions: {
+    copy: {
+        label: 'Копировать продукт',
+        default_template: 'ProductTemplate',
+        form: 'PVTables',
+        add_fields: {
+            product_type_id: {
+                label: 'Тип продукта',
+                type: 'select',
+                select: 'product_type',
+                default: 1
+            },
+            category_id: {
+                label: 'Категория',
+                type: 'autocomplete',
+                table: 'categories'
+            }
+        },
+        child: {
+            many: {
+                'gsProductParam': 'Params',
+                'gsProductVariable': 'Variable',
+                'gsProductMaterial': 'Material',
+                'gsProductJob': 'Job'
+            },
+            one: {
+                'gsProductSettings': 'Settings'
+            }
+        }
+    }
+}
+```
+
+**Конфигурация для UniTree (с множественными таблицами):**
+```javascript
+actions: {
+    copy: {
+        tables: {
+            gsProduct: {
+                label: 'Копировать продукт',
+                parent_classes: ['gsProduct'],  // Массив классов-родителей
+                form: 'UniTree',
+                add_fields: {
+                    product_type_id: {
+                        label: 'Тип продукта',
+                        type: 'select',
+                        select: 'product_type',
+                        default: 1
+                    }
+                },
+                child: {
+                    many: {
+                        'gsProductParam': 'Params',
+                        'gsProductVariable': 'Variable'
+                    }
+                }
+            },
+            gsCategory: {
+                label: 'Копировать категорию',
+                parent_classes: ['gsCategory'],
+                form: 'UniTree',
+                add_fields: {
+                    name: {
+                        label: 'Название',
+                        type: 'text'
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+**Параметры действия copy:**
+- `label` (обязательно) - название действия в интерфейсе
+- `parent_class` (опционально) - класс MODX для основной таблицы
+- `default_template` (опционально) - шаблон по умолчанию для новой записи
+- `form` (опционально) - тип формы: 'UniTree' или 'PVTables'
+- `add_fields` (опционально) - дополнительные поля для ввода при копировании
+- `child` (опционально) - конфигурация связанных таблиц для копирования
+
+**Параметр add_fields:**
+Объект с полями формы, где ключ - имя поля, значение - конфигурация поля:
+- `label` - подпись поля
+- `type` - тип поля (text, select, autocomplete, date и т.д.)
+- `table` - таблица для autocomplete (если type = 'autocomplete')
+- `select` - название селекта (если type = 'select')
+- `default` - значение по умолчанию
+
+**Параметр child:**
+- `many` - объект для копирования связей типа "один ко многим"
+  - Ключ: класс MODX связанной таблицы
+  - Значение: алиас связи для метода `getMany()`
+- `one` - объект для копирования связей типа "один к одному"
+  - Ключ: класс MODX связанной таблицы
+  - Значение: алиас связи для метода `getOne()`
+
+**Поведение при копировании:**
+
+1. **Без формы:**
+   - Создается копия записи с новым ID
+   - Копируются все поля кроме ID
+   - Если указаны связи `child`, копируются связанные записи
+
+2. **С формой:**
+   - Открывается модальное окно с полями из `form.row`
+   - Пользователь может изменить значения полей
+   - Применяются значения по умолчанию из `default`
+   - После подтверждения создается копия с новыми значениями
+
+3. **Копирование связей many:**
+   - Загружаются все связанные записи через `getMany(alias)`
+   - Удаляются существующие связи у новой записи (если есть)
+   - Создаются новые записи связей с привязкой к новой записи
+
+4. **Копирование связей one:**
+   - Загружается связанная запись через `getOne(alias)`
+   - Создается новая запись связи с привязкой к новой записи
+
+**Примеры использования:**
+
+```javascript
+// Простое копирование без связей
+actions: {
+    copy: {
+        label: 'Дублировать',
+        parent_class: 'Article'
+    }
+}
+
+// Копирование с формой
+actions: {
+    copy: {
+        label: 'Копировать статью',
+        parent_class: 'Article',
+        form: 'PVTables',
+        add_fields: {
+            title: {
+                label: 'Новое название',
+                type: 'text'
+            },
+            published: {
+                label: 'Опубликовано',
+                type: 'boolean',
+                default: 0
+            }
+        }
+    }
+}
+
+// Копирование со связями many
+actions: {
+    copy: {
+        label: 'Копировать с параметрами',
+        parent_class: 'Product',
+        child: {
+            many: {
+                'ProductParam': 'Params',
+                'ProductImage': 'Images'
+            }
+        }
+    }
+}
+
+// Полная конфигурация
+actions: {
+    copy: {
+        label: 'Копировать заказ',
+        parent_class: 'Order',
+        default_template: 'OrderTemplate',
+        form: 'UniTree',
+        add_fields: {
+            order_date: {
+                label: 'Дата заказа',
+                type: 'date'
+            },
+            status_id: {
+                label: 'Статус',
+                type: 'select',
+                select: 'order_status',
+                default: 1
+            }
+        },
+        child: {
+            many: {
+                'OrderItem': 'Items',
+                'OrderPayment': 'Payments'
+            },
+            one: {
+                'OrderSettings': 'Settings'
+            }
+        }
+    }
+}
+```
+
+**Триггеры:**
+Действие `copy` поддерживает триггеры:
+- `before_copy` - выполняется перед копированием
+- `after_copy` - выполняется после успешного копирования
+
+**Ответ сервера:**
+```javascript
+{
+    success: true,
+    message: 'Запись успешно скопирована',
+    data: {
+        id: 123, // ID новой записи
+        saved: [
+            // Массив результатов сохранения связей
+        ]
+    }
+}
+```
+
+**Интеграция с интерфейсом:**
+- Кнопка копирования отображается в строке таблицы (если `row: true`)
+- Кнопка копирования отображается в заголовке (если `head: true`)
+- Иконка по умолчанию: `pi pi-copy`
+- Класс кнопки по умолчанию: `p-button-info`
+- Поддержка множественного выбора для копирования нескольких записей
+
+**Безопасность:**
+- Применяются все настройки доступа из конфигурации таблицы
+- Копируются только те данные, которые пользователь может видеть
+- Соблюдаются все фильтры и ограничения доступа
+
 
 #### Print (Печать)
 
