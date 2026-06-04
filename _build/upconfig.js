@@ -8,7 +8,6 @@ import snippets from "./configs/snippets.js";
 import plugins from "./configs/plugins.js";
 import templates from "./configs/templates.js";
 import settings from "./configs/settings.js";
-import gtsapirules from "./configs/gtsapirules.js"
 import gtsapipackages from "./configs/gtsapipackages.js"
 import data from "./configs/data.js";
 import resources from "./configs/resources.js";
@@ -45,7 +44,6 @@ form.append('plugins', JSON.stringify(plugins))
 form.append('chunks', JSON.stringify(chunks))
 form.append('templates', JSON.stringify(templates))
 form.append('settings', JSON.stringify(settings))
-form.append('gtsapirules', JSON.stringify(gtsapirules))
 form.append('gtsapipackages', JSON.stringify(gtsapipackages, null, 2))
 form.append('data', JSON.stringify(data, null, 2))
 form.append('resources', JSON.stringify(resources, null, 2))

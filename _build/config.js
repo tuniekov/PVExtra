@@ -12,7 +12,6 @@ export default {
         chunks: true,
         templates: true,
         settings: true,
-        gtsapirules: true,
         gtsapipackages: true,
     }
 }
