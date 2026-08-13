@@ -13,7 +13,7 @@
  * Пусто (`export default {
     // REST-слой и таблицы интерфейса — нужен всем PVExtra-компонентам
     gtsAPI: {
-        version: '1.1.1-beta',
+        version: '1.1.2-beta',
         service_url: 'modstore.pro',
         required: true,
     },
