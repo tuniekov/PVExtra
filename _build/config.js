@@ -12,6 +12,7 @@ export default {
         chunks: true,
         templates: true,
         settings: true,
+        menus: true,
         gtsapipackages: true,
     }
 }
